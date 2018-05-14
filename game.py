@@ -10,7 +10,14 @@ class board(object):
         self.state = {}
         self.availables = list(range(self.width*self.height))
         self.last_move = -1
-        self.state = {}
+
+    def initialize_state(self):
+        self.state = {
+            0:0, 1:0, 2:0, 3:0,
+            4:0, 5:0, 6:0, 7:0,
+            8:0, 9:0, 10:0, 11:0,
+            12:0, 13:0, 14:0, 15:0,
+        }
 
     # "move" expression inherit the method used in gomoku
     # it is a representation of a location in one integer number
@@ -96,6 +103,7 @@ class game(object):
 
     def graphic(self, board, player):
         """Draw the board and show game info"""
+        self.board.initialize_state()
         width = board.width
         height = board.height
 
@@ -104,11 +112,11 @@ class game(object):
         for x in range(width):
             print("{0:8}".format(x), end='')
         print('\r\n')
-        for i in range(height - 1, -1, -1):     # print from top to the bottom
+        for i in xrange(height):     # print from top to the bottom
             print("{0:4d}".format(i), end='')
-            for j in range(width):
+            for j in xrange(width):
                 loc = i * width + j
-                p = board.state.get(loc, -1)
+                p = board.state[loc]
                 if p==0:
                     print('_'.center(8), end='')
                 else:
@@ -119,6 +127,7 @@ class game(object):
         if is_shown:
             self.graphic(self.board, player)
         while True:
+            player.get_action(self.board)
             if is_shown:
                 self.graphic(self.board, player)
             end, result = self.board.game_end()
