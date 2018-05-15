@@ -9,7 +9,7 @@ class board(object):
         self.width = 4
         self.height = 4
         self.state = {}
-        # self.availables = list(range(self.width*self.height))
+        self.availables = []
         self.last_move = -1
 
     def initialize_state(self):
@@ -44,14 +44,14 @@ class board(object):
     def current_state(self):
         # state is a dictionary, the key is the moves
         # while the value is the value at the location of the move
-
-        # to do
-        # state = np.zeros((self.width,self.height))
-        # if self.state:
-        #     moves, values = np.array(list(zip(*self.state.items())))
-
         return self.state
-    
+
+    def update_availables(self):
+        self.availables = []
+        for pos, val in self.state.items():
+            if val==0:
+                self.availables.append(pos)
+        
     def generateNew(self):
         availables = []
         for pos, value in self.state.items():    # for name, age in list.items():  (for Python 3.x)
@@ -61,6 +61,7 @@ class board(object):
             # new_moves make the positiion for the new 2
             new_move = random.choice(availables)
             self.state[new_move]=2
+        self.update_availables()
 
     def game_end(self):
         values = self.state.values()
@@ -137,6 +138,7 @@ class board(object):
                             self.state[i]=0
                             i+=4
                         else: break
+        self.update_availables()
 
     def moveLeft(self):
         elements = self.state.keys()
@@ -168,7 +170,8 @@ class board(object):
                             self.state[i]=0
                             i-=1
                         else: break
-
+        self.update_availables()
+   
     def moveDown(self):
         elements = self.state.keys()
         # combine
@@ -199,6 +202,7 @@ class board(object):
                             self.state[i]=0
                             i-=4
                         else: break
+        self.update_availables()
 
     def moveRight(self):
         elements = self.state.keys()
@@ -230,6 +234,7 @@ class board(object):
                             self.state[i]=0
                             i+=1
                         else: break
+        self.update_availables()
             
 
 
@@ -246,7 +251,7 @@ class game(object):
         height = board.height
 
         print("Press W/A/S/D to move the numbers on the board to reach 2048")
-        print(board.state)
+        print(board.availables)
 
         for x in range(width):
             print("{0:8}".format(x), end='')
