@@ -19,11 +19,9 @@ class player(object):
             elif action == 'd' or action == "D":
                 board.moveRight()
         except Exception:
-            move = -1
-        if move == -1:
             print("invalid move")
-            move = self.get_action(board)
-        return move
+            # move = self.get_action(board)
+        # return move
 
 
 def run():

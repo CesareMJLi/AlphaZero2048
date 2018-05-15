@@ -13,11 +13,17 @@ class board(object):
 
     def initialize_state(self):
         self.state = {
-            0:0, 1:0, 2:0, 3:0,
-            4:0, 5:0, 6:0, 7:0,
-            8:0, 9:0, 10:0, 11:0,
-            12:0, 13:0, 14:0, 15:0,
+            0:8, 1:2, 2:4, 3:4,
+            4:8, 5:0, 6:0, 7:0,
+            8:4, 9:0, 10:2, 11:4,
+            12:2, 13:2, 14:0, 15:0,
         }
+        # self.state = {
+        #     0:0, 1:0, 2:0, 3:0,
+        #     4:0, 5:0, 6:0, 7:0,
+        #     8:0, 9:0, 10:0, 11:0,
+        #     12:0, 13:0, 14:0, 15:0,
+        # }
 
     # "move" expression inherit the method used in gomoku
     # it is a representation of a location in one integer number
@@ -94,27 +100,158 @@ class board(object):
             ind+=1
             nextInd+=1
         return False
+    
+    def moveUp(self):
+        # divide the move function into two steps
+        # 1. check each row whether there is two elements could be combined
+        # 2. move the combined elements
+        elements = self.state.keys()
+        # combine
+        for i in reversed(elements):
+            if i<4:
+                break
+            else:
+                if self.state[i]==self.state[i-4]:
+                    self.state[i]=2*self.state[i]
+                    self.state[i-4]=0
+                elif i>7 and self.state[i]==self.state[i-8] and self.state[i-4]==0:
+                    self.state[i]=2*self.state[i]
+                    self.state[i-8]=0
+                elif i>11 and self.state[i]==self.state[i-12] and self.state[i-4]==0 and self.state[i-8]==0:
+                    self.state[i]=2*self.state[i]
+                    self.state[i-12]=0
+        # move
+        for i in reversed(elements):
+            if i>11:
+                continue
+            else:
+                if self.state[i]==0:
+                    continue
+                else:
+                    while i+4<16:
+                        if self.state[i+4]==0:
+                            self.state[i+4]=self.state[i]
+                            self.state[i]=0
+                            i+=4
+                        else: break
+
+    def moveLeft(self):
+        elements = self.state.keys()
+        # combine
+        for i in elements:
+            if i%4 == 3:
+                continue
+            else:
+                if self.state[i]==self.state[i+1]:
+                    self.state[i]=2*self.state[i]
+                    self.state[i+1]=0
+                elif (i%4==0 or i%4==1) and self.state[i]==self.state[i+2] and self.state[i+1]==0:
+                    self.state[i]=2*self.state[i]
+                    self.state[i+2]=0
+                elif i%4==0 and self.state[i]==self.state[i+3] and self.state[i+1]==0 and self.state[i+2]==0:
+                    self.state[i]=2*self.state[i]
+                    self.state[i+3]=0
+        # move
+        for i in elements:
+            if i%4 == 0:
+                continue
+            else:
+                if self.state[i]==0:
+                    continue
+                else:
+                    while (i-1)%4!=3:
+                        if self.state[i-1]==0:
+                            self.state[i-1]=self.state[i]
+                            self.state[i]=0
+                            i-=1
+                        else: break
+
+
+    def moveDown(self):
+        elements = self.state.keys()
+        # combine
+        for i in elements:
+            if i>=12:
+                break
+            else:
+                if self.state[i]==self.state[i+4]:
+                    self.state[i]=2*self.state[i]
+                    self.state[i+4]=0
+                elif i<8 and self.state[i]==self.state[i+8] and self.state[i+4]==0:
+                    self.state[i]=2*self.state[i]
+                    self.state[i+8]=0
+                elif i<4 and self.state[i]==self.state[i+12] and self.state[i+4]==0 and self.state[i+8]==0:
+                    self.state[i]=2*self.state[i]
+                    self.state[i+12]=0
+        # move
+        for i in elements:
+            if i<4:
+                continue
+            else:
+                if self.state[i]==0:
+                    continue
+                else:
+                    while i-4>=0:
+                        if self.state[i-4]==0:
+                            self.state[i-4]=self.state[i]
+                            self.state[i]=0
+                            i-=4
+                        else: break
+
+    def moveRight(self):
+        elements = self.state.keys()
+        # combine
+        for i in reversed(elements):
+            if i%4 == 0:
+                continue
+            else:
+                if self.state[i]==self.state[i-1]:
+                    self.state[i]=2*self.state[i]
+                    self.state[i-1]=0
+                elif (i%4==3 or i%4==2) and self.state[i]==self.state[i-2] and self.state[i-1]==0:
+                    self.state[i]=2*self.state[i]
+                    self.state[i-2]=0
+                elif i%4==3 and self.state[i]==self.state[i-3] and self.state[i-1]==0 and self.state[i-2]==0:
+                    self.state[i]=2*self.state[i]
+                    self.state[i-3]=0
+        # move
+        for i in reversed(elements):
+            if i%4 == 3:
+                continue
+            else:
+                if self.state[i]==0:
+                    continue
+                else:
+                    while (i+1)%4!=0:
+                        if self.state[i+1]==0:
+                            self.state[i+1]=self.state[i]
+                            self.state[i]=0
+                            i+=1
+                        else: break
+            
+
 
 
 
 class game(object):
     def __init__(self, board):
         self.board = board
+        self.board.initialize_state()
 
     def graphic(self, board, player):
         """Draw the board and show game info"""
-        self.board.initialize_state()
         width = board.width
         height = board.height
 
         print("Press W/A/S/D to move the numbers on the board to reach 2048")
+        print(board.state)
 
         for x in range(width):
             print("{0:8}".format(x), end='')
         print('\r\n')
-        for i in xrange(height):     # print from top to the bottom
+        for i in range(height - 1, -1, -1):     # print from top to the bottom
             print("{0:4d}".format(i), end='')
-            for j in xrange(width):
+            for j in range(width):
                 loc = i * width + j
                 p = board.state[loc]
                 if p==0:
@@ -130,10 +267,10 @@ class game(object):
             player.get_action(self.board)
             if is_shown:
                 self.graphic(self.board, player)
-            end, result = self.board.game_end()
-            if end:
-                if is_shown:
-                    if result == 1:
-                        print("Game end. You win! XD")
-                    else:
-                        print("Game end. You lose :(")
+            # end, result = self.board.game_end()
+            # if end:
+            #     if is_shown:
+            #         if result == 1:
+            #             print("Game end. You win! XD")
+            #         else:
+            #             print("Game end. You lose :(")
