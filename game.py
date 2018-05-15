@@ -2,28 +2,29 @@
 
 from __future__ import print_function
 import numpy as np
+import random
 
 class board(object):
     def __init__(self):
         self.width = 4
         self.height = 4
         self.state = {}
-        self.availables = list(range(self.width*self.height))
+        # self.availables = list(range(self.width*self.height))
         self.last_move = -1
 
     def initialize_state(self):
-        self.state = {
-            0:8, 1:2, 2:4, 3:4,
-            4:8, 5:0, 6:0, 7:0,
-            8:4, 9:0, 10:2, 11:4,
-            12:2, 13:2, 14:0, 15:0,
-        }
         # self.state = {
-        #     0:0, 1:0, 2:0, 3:0,
-        #     4:0, 5:0, 6:0, 7:0,
-        #     8:0, 9:0, 10:0, 11:0,
-        #     12:0, 13:0, 14:0, 15:0,
+        #     0:8, 1:2, 2:4, 3:4,
+        #     4:8, 5:0, 6:0, 7:0,
+        #     8:4, 9:0, 10:2, 11:4,
+        #     12:2, 13:2, 14:0, 15:0,
         # }
+        self.state = {
+            0:0, 1:0, 2:0, 3:0,
+            4:0, 5:0, 6:0, 7:0,
+            8:0, 9:0, 10:0, 11:0,
+            12:0, 13:0, 14:0, 15:0,
+        }
 
     # "move" expression inherit the method used in gomoku
     # it is a representation of a location in one integer number
@@ -52,18 +53,20 @@ class board(object):
         return self.state
     
     def generateNew(self):
-        moves = np.array(list(self.state.keys()))
-        if moves.size < self.width * self.height:
+        availables = []
+        for pos, value in self.state.items():    # for name, age in list.items():  (for Python 3.x)
+            if value == 0:
+                availables.append(pos)
+        if len(availables)>0:
             # new_moves make the positiion for the new 2
-            new_move = np.random.choice(len(self.availables))
-            new_move = self.availables.pop(new_move)
-        self.state[new_move] = 2
+            new_move = random.choice(availables)
+            self.state[new_move]=2
 
     def game_end(self):
         values = self.state.values()
         countZero = 0
         for i in values:
-            if i==2048:
+            if i==512:
                 return True, 1
             if i==0:
                 countZero+=1
@@ -75,13 +78,13 @@ class board(object):
             for i in moves:
                 if i<4 :
                     res = self.checkCol(i)
-                    if res:
-                        return False,1
+                    if not res:
+                        return True, -1
                 if i%4 == 0:
                     res = self.checkRow(i)
-                    if res:
-                        return False, 1
-        return True, -1
+                    if not res:
+                        return True, -1
+        return False, 1
         
     def checkCol(self, ind):
         nextInd = ind+4
@@ -165,7 +168,6 @@ class board(object):
                             self.state[i]=0
                             i-=1
                         else: break
-
 
     def moveDown(self):
         elements = self.state.keys()
@@ -262,15 +264,19 @@ class game(object):
 
     def start_play(self, player, is_shown=1):
         if is_shown:
+            self.board.generateNew()
+            self.board.generateNew()
+            self.board.generateNew()
             self.graphic(self.board, player)
         while True:
             player.get_action(self.board)
+            self.board.generateNew()
             if is_shown:
                 self.graphic(self.board, player)
-            # end, result = self.board.game_end()
-            # if end:
-            #     if is_shown:
-            #         if result == 1:
-            #             print("Game end. You win! XD")
-            #         else:
-            #             print("Game end. You lose :(")
+            end, result = self.board.game_end()
+            if end:
+                if is_shown:
+                    if result == 1:
+                        print("Game end. You win! XD")
+                    else:
+                        print("Game end. You lose :(")
