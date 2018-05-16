@@ -15,47 +15,39 @@ def policy_value_fn(board):
     return zip(board.availables, action_probs), 0
 
 class treeNode(object):
-    # A node in the MCTS tree
-    # tracking its own value Q, prior probability P and 
-    # visit-count-adjusted pror socre u
-
     def __init__(self, parent, prior_p):
+        '''Parameters:
+        value Q, prior probability P, visit-count-adjusted prior score u'''
         self.parent = parent
         self.children = {}
         self.n_visits = 0
         self.Q = 0
-        self.u = 0
         self.P = prior_p
+        self.u = 0
 
-    def expand(self, action_priors):
-        # expand the tree to create new children from current state by differnt actions
-        # PARAMETERS:
-        # action_priors: a list of tuples of actions 
-        # and their probability according to the policy function
-        for action, prob in action_priors:
+    def expand(self, action_probs):
+        '''expand the tree to create new children from current state by differnt actions
+        Parameters: action_priors a list of tuples of actions and their probability according to the policy function'''
+        for action, prob in action_probs:
             if action not in self.children:
                 self.children[action] = treeNode(self, prob)
 
     def select(self, c_puct):
-        # Upper Confidence Bounds
-        # select action among the children which gives 
-        # maximum action value Q plus bonus u(P)
-        # return: A tuple of (action, next_node)
-        # c_puct: a number in (0, inf) controlling the relative impact of
-        # value Q, and prior probability P, on this node's score.
+        '''select action among the children which gives 
+        maximum action value Q plus bonus u(P)
+        return: A tuple of (action, next_node)
+        c_puct: a number in (0, inf) controlling the relative impact of
+        value Q, and prior probability P, on this node's score.
 
-        # here a potential condition is that at least one child node of current node exists.
-        # remember, each time we expand a node, we expand the node all the actions it could have
-        # so if we have one child nodes, we have all the child nodes
+        here a potential condition is that at least one child node of current node exists.
+        remember, each time we expand a node, we expand the node all the actions it could have
+        so if we have one child nodes, we have all the child nodes'''
         return max(self.children.items(),
             key=lambda act_node: act_node[1].get_value(c_puct))
     
     def update(self, leaf_value):
-        # update a node values from leaf evaluation
-        # PARAMETERS:
-        # leaf_value: the value of subtree evaluation from the current player's view
         self.n_visits +=1
-        self.Q += 1.0(leaf_value - self.Q)/self.n_visits
+        self.Q += 1.0*(leaf_value - self.Q)/self.n_visits
         #---------------------------------
         # like for a MCTS 8/10->3/5->[0/1]
         # there are 10 plays and now we add a new 0/1 to the tree and its parent is 3/5
@@ -63,29 +55,25 @@ class treeNode(object):
         #---------------------------------
 
     def update_recursive(self, leaf_value):
-        # the update starts from 8/10 in the same way to update it into 8/11
-        # remember, this recuresive start from root
+        # a recursive root to leaves update starts from 8/10 in the same way to update it into 8/11
         if self.parent:
-            self.parent,update_recursive(-leaf_value)
+            self.parent.update_recursive(-leaf_value)
         self.update(leaf_value)
 
     def get_value(self, c_puct):
-        # up to now we only consider about the value of Q and n_visited
         """Calculate and return the value for this node.
-        It is a combination of leaf evaluations Q, and this node's prior
-        adjusted for its visit count, u.
-        c_puct: a number in (0, inf) controlling the relative impact of
-            value Q, and prior probability P, on this node's score.
+        It is a combination of leaf evaluations Q, and this node's prior adjusted for its visit count, u.
+        c_puct: a number in (0, inf) controlling the relative impact of value Q, and prior probability P, on this node's score.
         """
-        self._u = (c_puct * self._P *
-                   np.sqrt(self._parent._n_visits) / (1 + self._n_visits))
-        return self._Q + self._u
+        self.u = (c_puct * self.P *
+                   np.sqrt(self.parent.n_visits) / (1 + self.n_visits))
+        return self.Q + self.u
 
     def is_leaf(self):
-        return self._children == {}
+        return self.children == {}
 
     def is_root(self):
-        return self._parent is None
+        return self.parent is None
 
 class mctsTree(object):
     """A simple implementation of Monte Carlo Tree Search."""
@@ -95,7 +83,8 @@ class mctsTree(object):
     # and return the best choice in the current situation and move root
     # both _playou() and _evaluate_rollout() serve get_move
 
-    def __init__(self, policy_value_fn, c_puct=5, n_playout=10000):
+    def __init__(self, policy_value_fn, c_puct=5, n_playout=1000):
+        # the original n_playout = 10000
         """
         policy_value_fn: a function that takes in a board state and outputs
             a list of (action, probability) tuples and also a score in [-1, 1]
@@ -173,26 +162,25 @@ class mctsTree(object):
             # it includes selection/expansion/simulation/back propagation
         return max(self.root.children.items(),
                    key=lambda act_node: act_node[1].n_visits)[0]
+                #  this is a beautiful expression of max(,key=lamba) format.
+                #  https://stackoverflow.com/questions/18296755/python-max-function-using-key-and-lambda-expression
 
     def update_with_move(self, last_move):
-        """Step forward in the tree, keeping everything we already know
-        about the subtree.
-        """
+        """Step forward in the tree, keeping everything we already know about the subtree."""
         if last_move in self.root.children:
             self.root = self.root.children[last_move]
             self.root.parent = None
         else:
-            self.root = TreeNode(None, 1.0)
+            self.root = treeNode(None, 1.0)
 
     def __str__(self):
+        # when print a class, the __str__ function is the content of the thing going to be printed out
         return "MCTS"
 
 class mctsPlayer(object):
     """AI player based on MCTS"""
     def __init__(self, c_puct=5, n_playout=2000):
-        self.mcts = MCTS(policy_value_fn, c_puct, n_playout)
-        # here to create an instance of MCTS,
-        # one parameter is a function we are going to use
+        self.mcts = mctsTree(policy_value_fn, c_puct, n_playout)
 
     def reset_player(self):
         self.mcts.update_with_move(-1)
@@ -203,8 +191,5 @@ class mctsPlayer(object):
             print("WARNING: the game is ended")
         else:
             move = self.mcts.get_move(board)
-            self.mcts.update_with_move(-1)
+            self.mcts.update_with_move(move)
             return move
-            
-    def __str__(self):
-        return "MCTS {}".format(self.player)
