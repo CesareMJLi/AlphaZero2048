@@ -1,11 +1,11 @@
 
-
 from __future__ import print_function
 import numpy as np
 import random
 
 class board(object):
     def __init__(self):
+        self.actions_available = [0,1,2,3]
         self.width = 4
         self.height = 4
         self.state = {}
@@ -60,7 +60,11 @@ class board(object):
         if len(availables)>0:
             # new_moves make the positiion for the new 2
             new_move = random.choice(availables)
-            self.state[new_move]=2
+            new_val = random.choice([0,1])
+            if new_val==0:
+                self.state[new_move]=2
+            else:
+                self.state[new_move]=4
         self.update_availables()
 
     def game_end(self):
@@ -85,7 +89,7 @@ class board(object):
                     res = self.checkRow(i)
                     if not res:
                         return True, -1
-        return False, 1
+        return False, 0
         
     def checkCol(self, ind):
         nextInd = ind+4
@@ -251,7 +255,7 @@ class game(object):
         height = board.height
 
         print("Press W/A/S/D to move the numbers on the board to reach 2048")
-        print(board.availables)
+        # print(board.availables)
 
         for x in range(width):
             print("{0:8}".format(x), end='')

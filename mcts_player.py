@@ -5,14 +5,16 @@ import copy
 from operator import itemgetter
 
 def rollout_policy_fn(board):
-    action_probs = np.random.rand(len(board.availables))
-    return zip(board.availables, action_probs)
+    action_probs = np.random.rand(4)
+    return zip(board.actions_availables, action_probs)
+    # 0，1，2，3 corresponding to 4 different moves
 
 def policy_value_fn(board):
     """a function that takes in a state and outputs a list of (action, probability)
     tuples and a score for the state"""
-    action_probs = np.ones(len(board.availables))/len(board.availables)
-    return zip(board.availables, action_probs), 0
+    action_probs = np.ones(4)/4
+    return zip(board.actions_availables, action_probs)
+    # here this is a pure mcts, so it is randomly choice
 
 class treeNode(object):
     def __init__(self, parent, prior_p):
@@ -101,28 +103,26 @@ class mctsTree(object):
 
     def _playout(self, state):
         """Run a single playout from the root to the leaf, getting a value at
-        the leaf and propagating it back through its parents.
+        t/he leaf and propagating it back through its parents.
         State is modified in-place, so a copy must be provided.
         """
         node = self.root
-        # now the root is current board situation
+        # SELECTION
         while(1):
             if node.is_leaf():
                 break
-            # Greedily select next move. until it reaches a leaf
             action, node = node.select(self.c_puct)
             state.do_move(action)
 
         # here reaches the end of tree but still maybe not end of the game
         # Check for end of game
-        end, winner = state.game_end()
-        action_probs, _ = self.policy(state)
+        end, _ = state.game_end()
+        action_probs = self.policy(state)
 
         # according to the current state, derive a set of probabilities for each action
         # in this example, it's like a tuple of {w:0.1, a:0.2, s:0.3, d:0.4}
         if not end:
-            # use the previous derived prob to expand the current leaf
-            # like for each action build one child-node
+            # EXPANSION
             node.expand(action_probs)
 
         # Evaluate the leaf node by random rollout
@@ -136,7 +136,7 @@ class mctsTree(object):
         returning 1 if the player win the game, 0 if he lost it.
         """
         # this is for one single MCTS process, do the random play
-        for i in range(limit):
+        for _ in range(limit):
             end, result = state.game_end()
             if end:
                 break
@@ -155,7 +155,7 @@ class mctsTree(object):
         state: the current game state
         Return: the selected action
         """
-        for n in range(self.n_playout):
+        for _ in range(self.n_playout):
             state_copy = copy.deepcopy(state)
             self._playout(state_copy)
             # play out is the core operation:
@@ -167,6 +167,7 @@ class mctsTree(object):
 
     def update_with_move(self, last_move):
         """Step forward in the tree, keeping everything we already know about the subtree."""
+        # a move belongs to 0/1/2/3 means w/a/s/d, if not in this range a new root would be created
         if last_move in self.root.children:
             self.root = self.root.children[last_move]
             self.root.parent = None
@@ -184,9 +185,10 @@ class mctsPlayer(object):
 
     def reset_player(self):
         self.mcts.update_with_move(-1)
+        # it means creating a new tree
 
     def get_action(self, board):
-        end, result = board.game_end()
+        end, _ = board.game_end()
         if end:
             print("WARNING: the game is ended")
         else:

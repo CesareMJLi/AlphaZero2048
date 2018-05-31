@@ -1,8 +1,11 @@
 
 
-action = raw_input("Your move: ")
+randomL=[]
 
-if action == 'w' or action == "W":
-    print("W")
-elif action == 'a':
-    print("A")
+for i in xrange(10):
+    randomL.append(i)
+
+print randomL
+
+for _  in randomL:
+    print("WTF")
